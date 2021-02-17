@@ -12,14 +12,14 @@
 #include "lcd.h"
 
 char lcdString[16];  //String that is written to lcd
-char alarmPassword[4]; //Alarm deactivate password
-char password[4];	//Potential alarm password, one which is written to deactivate alarm
+char alarmPassword[4] = {'0', '0', '0', '0'}; //Alarm deactivate password, default password is 0000
+char password[4]; //Potential alarm password, one which is written to deactivate alarm
 uint8_t numberOfDigits = 0; //Used to index password strings
 uint8_t modeOfOperationPolling = 1;  //States whether main loop should poll for modes changes, could be either 0 or 1
 uint8_t countdownEnable = 0; //Tells if timer ISR should countdown countdownValue variable
 uint8_t countdownValue = 65;
 char modeOfOperation = 'A';  //Modes of operations are: A - Welcome screen, B - Set alarm password, C - Activate alarm
-uint8_t alamrTriggerd = 0;
+uint8_t alarmTriggered = 0;
 
 char getPressedKey(){
 	
@@ -29,8 +29,9 @@ char getPressedKey(){
 	
 	//Reading rows	
 	keypadDirectionReg = 0b00001111;
-	keypadPortControl = 0b11110000;
-	_delay_ms(50);
+	keypadPortControl = 0b11110000;  
+	_delay_ms(50);					 
+										
 	
 	//Represents keypadPortValue from columns and rows combined 4 higher bits represent rows and 4 lower bits are columns
 	keyPressCode = keypadPortValue;
@@ -91,12 +92,15 @@ void alarmOnModeInit(){
 	
 	numberOfDigits = 0;
 	modeOfOperationPolling = 0;
-	alamrTriggerd = 0;
+	alarmTriggered = 0;
+	
+	countdownEnable = 0;
+	countdownValue = 65;
 	
 	_delay_ms(500);
 }
 
-void welcomeModeInit(){
+void welcomeMode(){
 	
 	lcd_clrscr();
 	//Intial LCD message
@@ -140,6 +144,8 @@ void setAlarmPassword(){
 		modeOfOperationPolling = 1;
 		modeOfOperation = 'A';
 		_delay_ms(1000);
+		welcomeMode();
+		
 	}
 	
 }
@@ -175,8 +181,8 @@ void robbery(){
 
 void alarmOn(){
 	
-	if(bit_is_clear(PINC, 0) && alamrTriggerd == 0){
-		alamrTriggerd = 1;
+	if(bit_is_clear(PINC, 0) && alarmTriggered == 0){
+		alarmTriggered = 1;
 		lcd_clrscr();
 		lcd_puts("!!!!!!!!!!!!!!!");
 		lcd_gotoxy(0, 1);
@@ -184,7 +190,7 @@ void alarmOn(){
 		PORTC &= 0b00000001;
 	}
 	
-	if(alamrTriggerd == 1){
+	if(alarmTriggered == 1){
 		PORTC ^= 0b10000000;
 	}
 	
@@ -216,11 +222,14 @@ void alarmOn(){
 		&& password[3] == alarmPassword[3])
 		{
 			lcd_clrscr();
-			lcd_puts("Alaram off!");
+			lcd_puts("Alarm off!");
 			PORTC = 0b10000001;
 			_delay_ms(1000);
 			modeOfOperationPolling = 1;
 			countdownEnable = 0;
+			modeOfOperation = 'A';
+			welcomeMode();
+			
 		}
 		else {
 			lcd_clrscr();
@@ -242,12 +251,12 @@ int main(void){
 	//Local variables
 	char pressedKey = 'n'; //n represents none or nothing is pressed
 											
-	//Sound sensor init
+	//Sound sensor and buzzer init
 	DDRC = 0b11111110;
 	PORTC = 0b10000001;
 	
 	//defalut mode
-	welcomeModeInit();
+	welcomeMode();
 								 
 	while (1){
 		
@@ -255,7 +264,7 @@ int main(void){
 			pressedKey = getPressedKey();
 			
 			if(pressedKey == 'A'){
-				welcomeModeInit();
+				welcomeMode();
 				modeOfOperation = pressedKey;
 			}
 			
