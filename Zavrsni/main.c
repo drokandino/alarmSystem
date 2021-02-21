@@ -19,9 +19,9 @@ char password[PASSWORDLENGTH]; //Potential alarm password, one which is written 
 uint8_t numberOfDigits = 0; //Used to index password strings
 uint8_t modeOfOperationPolling = 1;  //States whether main loop should poll for modes changes, could be either 0 or 1
 uint8_t countdownEnable = 0; //Tells if timer ISR should countdown countdownValue variable
-uint8_t countdownValue = 65;
+uint8_t countdownValue = 65; //value which is decremented in alarmMode on, represents time passed since alarm tirgger
 char modeOfOperation = 'A';  //Modes of operations are: A - Welcome screen, B - Set alarm password, C - Activate alarm
-uint8_t alarmTriggered = 0;
+uint8_t alarmTriggered = 0; 
 
 char getPressedKey(){
 	
@@ -118,7 +118,7 @@ void setAlarmPassword(){
 	//Disable mode of opertaion changing
 	modeOfOperationPolling = 0;
 	
-	//Poll for pressed key, 'n' represents that nothing is pressed
+	//Poll for pressed key, NONE represents that nothing is pressed
 	char pressedKey	= getPressedKey();
 	if(pressedKey != NONE && numberOfDigits < PASSWORDLENGTH){
 		//Print pressed key
@@ -251,7 +251,7 @@ int main(void){
 	
 	lcdInit();
 	//Local variables
-	char pressedKey = NONE; //n represents none or nothing is pressed
+	char pressedKey = NONE; //NONE represents none or nothing is pressed
 											
 	//Sound sensor and buzzer init
 	DDRC = 0b11111110;
