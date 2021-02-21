@@ -1,19 +1,21 @@
-#define F_CPU 8000000UL
+#define F_CPU 7372800UL
 
 #define keypadDirectionReg DDRB
 #define keypadPortControl PORTB
 #define keypadPortValue PINB
 
+#define PASSWORDLENGTH 4
+#define NONE 'n' //Represents that nothing is pressed on keypad
+
 #include <stdio.h>
 #include <string.h>
 #include <util/delay.h>
 #include <avr/io.h>
-#include <avr/interrupt.h>
 #include "lcd.h"
 
 char lcdString[16];  //String that is written to lcd
-char alarmPassword[4] = {'0', '0', '0', '0'}; //Alarm deactivate password, default password is 0000
-char password[4]; //Potential alarm password, one which is written to deactivate alarm
+char alarmPassword[PASSWORDLENGTH] = {'0', '0', '0', '0'}; //Alarm deactivate password, default password is 0000
+char password[PASSWORDLENGTH]; //Potential alarm password, one which is written to deactivate alarm
 uint8_t numberOfDigits = 0; //Used to index password strings
 uint8_t modeOfOperationPolling = 1;  //States whether main loop should poll for modes changes, could be either 0 or 1
 uint8_t countdownEnable = 0; //Tells if timer ISR should countdown countdownValue variable
@@ -23,8 +25,8 @@ uint8_t alarmTriggered = 0;
 
 char getPressedKey(){
 	
-	//default key value is n
-	char pressedKey = 'n';
+	//default key value is 'n', or NONE
+	char pressedKey = NONE;
 	uint8_t keyPressCode;
 	
 	//Reading rows	
@@ -43,7 +45,7 @@ char getPressedKey(){
 	
 	keyPressCode |= keypadPortValue;
 	
-	if (keyPressCode == 255) return 'n';
+	if (keyPressCode == 255) return NONE;
 	else if(keyPressCode == 0b01110111) pressedKey = '1';
 	else if(keyPressCode == 0b01111011) pressedKey = '2';
 	else if(keyPressCode == 0b01111101) pressedKey = '3';
@@ -118,7 +120,7 @@ void setAlarmPassword(){
 	
 	//Poll for pressed key, 'n' represents that nothing is pressed
 	char pressedKey	= getPressedKey();
-	if(pressedKey != 'n' && numberOfDigits < 4){
+	if(pressedKey != NONE && numberOfDigits < PASSWORDLENGTH){
 		//Print pressed key
 		sprintf(lcdString, "%c", pressedKey);
 		lcd_puts(lcdString);
@@ -131,7 +133,7 @@ void setAlarmPassword(){
 	}
 	
 	//If password is written(set)
-	if(numberOfDigits == 4){
+	if(numberOfDigits == PASSWORDLENGTH){
 		lcd_clrscr();
 		lcd_gotoxy(0, 0);
 		lcd_puts("Password is set");
@@ -206,16 +208,16 @@ void alarmOn(){
 	}
 	
 	char pressedKey = getPressedKey();
-	if(pressedKey != 'n' && numberOfDigits < 4){
+	if(pressedKey != NONE && numberOfDigits < PASSWORDLENGTH){
 		lcd_puts("*");
 		
 		password[numberOfDigits] = pressedKey;
-		pressedKey = 'n';
+		pressedKey = NONE;
 		numberOfDigits++;
 		_delay_ms(300);
 	}
 	
-	if(numberOfDigits == 4){
+	if(numberOfDigits == PASSWORDLENGTH){
 		if(password[0] == alarmPassword[0] 
 		&& password[1] == alarmPassword[1]
 		&& password[2] == alarmPassword[2] 
@@ -249,7 +251,7 @@ int main(void){
 	
 	lcdInit();
 	//Local variables
-	char pressedKey = 'n'; //n represents none or nothing is pressed
+	char pressedKey = NONE; //n represents none or nothing is pressed
 											
 	//Sound sensor and buzzer init
 	DDRC = 0b11111110;
