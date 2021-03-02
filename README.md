@@ -1,14 +1,8 @@
-SVEUČILIŠTE U RIJECI
-
-**TEHNIČKI FAKULTET**
-
-Preddiplomski sveučilišni studij računarstva
+**Dokumentacija**
 
 Završni projekt
 
 **Alarm sustav**
-
-Rijeka, Veljača 2021. Marin Car, Dino Drokan i Marin Frankić
 
 <span id="anchor"></span>
 
